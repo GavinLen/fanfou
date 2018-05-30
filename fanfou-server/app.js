@@ -1,3 +1,8 @@
+/**
+ *
+ * @type {createError}
+ */
+'use strict';
 var createError = require('http-errors');
 var express = require('express');
 var path = require('path');
@@ -5,14 +10,15 @@ var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 var multipart = require('connect-multiparty');// 上传文件需要的模块
 
-
 var config = require('./libs/config');
+var interceptorUtils = require('./libs/interceptorUtils');
+
 var fileUploadConfig = config.fileUploadConfig;
+var loginInterceptor = interceptorUtils.loginInterceptor;
+var tokenInterceptor = interceptorUtils.tokenInterceptor;
 
 var test = require('./routes/test');// 测试
 var upload = require('./routes/upload');// 文件上传
-
-
 
 var app = express();
 
@@ -27,8 +33,14 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(multipart({uploadDir: fileUploadConfig.fileUploadTempDir}));
 
+app.use(loginInterceptor);
+app.use(tokenInterceptor);
+
 app.use('/test', test);
 app.use('/upload', upload);
+
+app.use(loginInterceptor);
+app.use(tokenInterceptor);
 
 
 // catch 404 and forward to error handler

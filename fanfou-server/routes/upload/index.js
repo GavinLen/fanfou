@@ -1,3 +1,8 @@
+/**
+ *
+ * @type {*|createApplication}
+ */
+'use strict';
 var express = require('express');
 var path = require('path');
 var multipart = require('connect-multiparty');// 上传文件需要的模块
@@ -18,12 +23,21 @@ var maxAnalyzeFileSize = fileUploadConfig.maxAnalyzeFileSize;
 var flowChartTypes = fileUploadConfig.flowChartTypes;
 var maxFlowChartSize = fileUploadConfig.maxFlowChartSize;
 
+/**
+ * to fileUpload Page.
+ */
 router.get('', function (req, res, next) {
-    LOGGER.info('Req To upload:[%s].', 'abc');
-    res.send('To Get');
+    LOGGER.info('Req To FileUpload [%s].', 'upload/index');
+    res.render('upload/index');
 });
 
+/**
+ * handle fileUpload.
+ */
 router.post('/file', multipartMiddleware, function (req, res, next) {
+
+    var userId = null;
+
     var body = req.body;
     var files = req.files;
 
@@ -36,15 +50,15 @@ router.post('/file', multipartMiddleware, function (req, res, next) {
     var tag = body.tag;
     var param = body.param;
 
-    // // 内容校验
-    // if (name == undefined || name == '' || version == undefined || version == '') {
-    //     res.send('请求参数不合法');
-    //     return;
-    // }
+    // 内容校验
+    if (name === undefined || name === '' || version === undefined || version === '') {
+        res.send('请求参数不合法');
+        return;
+    }
 
     var file = files.file;
     var flowChart = files.flowChart;
-    if (file == undefined || flowChart == undefined) {
+    if (file === undefined || flowChart === undefined) {
         res.send('请求参数不合法');
         return;
     }
@@ -81,14 +95,14 @@ router.post('/file', multipartMiddleware, function (req, res, next) {
     var flowChartSuffix = path.extname(flowChartOriginalFilename);// 后缀
 
     // 验证上传文件的类型
-    if (!flowChartTypes.indexOf(fileType)) {
+    if (!flowChartTypes.indexOf(flowChartType)) {
         LOGGER.error('类型不允许上传');
         verifyResult = false;
     } else {
         verifyResult = true;
     }
     // 验证上传文件的大小
-    if (fileSize > maxFlowChartSize) {
+    if (flowChartSize > maxFlowChartSize) {
         LOGGER.error('大小不允许上传');
         verifyResult = false;
     } else {
@@ -96,27 +110,30 @@ router.post('/file', multipartMiddleware, function (req, res, next) {
     }
 
     // 处理结果
+    var newFilePath = fileUploadDir + name + '-' + version + '.' + fileSuffix;
+    var newFlowChartPath = fileUploadDir + name + '-' + version + '.' + flowChartSuffix;
     if (verifyResult) {
         LOGGER.info('上传成功');
 
         // 移动 file
         var fileSource = fs.createReadStream(filePath);
-        var newFilePath = fileUploadDir + name + '-' + version + '.' + fileSuffix;
+
         var fileDest = fs.createWriteStream(newFilePath);
 
         fileSource.pipe(fileDest);
         fileSource.on('end', function () {
-            fs.unlinkSync(filePath)
+            fs.unlinkSync(filePath);
         });
 
         // 移动 flowChart
+
         var flowChartSource = fs.createReadStream(flowChartPath);
-        var newFlowChartPath = fileUploadDir + name + '-' + version + '.' + flowChartSuffix;
+
         var FlowChartDest = fs.createWriteStream(newFlowChartPath);
 
         flowChartSource.pipe(FlowChartDest);
         flowChartSource.on('end', function () {
-            fs.unlinkSync(flowChartPath)
+            fs.unlinkSync(flowChartPath);
         });
 
         res.send('SUCCESS');
@@ -124,6 +141,12 @@ router.post('/file', multipartMiddleware, function (req, res, next) {
         LOGGER.info('上传失败');
         res.send('ERROR');
     }
+
+    var obj = {name: name, version: version, depict: depict, tag: tag, param: param};
+    obj.authorId = userId;
+    obj.filePath = newFilePath;
+    obj.flowChartPath = newFlowChartPath;
+
 });
 
 module.exports = router;

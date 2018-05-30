@@ -1,0 +1,44 @@
+doctype html
+html(lang='en')
+    head
+        meta(charset='UTF-8')
+        title 文件上传
+    body
+        form#form(action='http://localhost:3000/upload/file', method='post', enctype='multipart/form-data')
+            input(type='text', name='userName', placeholder='Name')
+            br
+            input(type='password', name='password', placeholder='Password')
+            br
+            input(type='file', name='file')
+            br
+            input(type='file', name='flowChart')
+            br
+        div
+            button#sub-form(type='button') 提交
+        script(type='text/javascript', src='https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js')
+        script(type='text/javascript').
+            $(function () {
+                $('#sub-form').click(subForm);
+            });
+            /**
+             * 提交
+             */
+            function subForm() {
+                console.log('subForm.');
+                var userName = $('[name="userName"]').val();
+                var password = $('[name="password"]').prop('files');
+                var file = $('[name="file"]').prop('files');
+                var flowChart = $('[name="flowChart"]').prop('files');
+
+                var fileReader = new FileReader();
+                fileReader.readAsText(file[0], 'UTF-8');
+                fileReader.readAsText(flowChart[0], 'UTF-8');
+
+
+
+                console.log(userName);
+                console.log(password);
+                console.log(files);
+
+                // $('#form').submit();
+            }
